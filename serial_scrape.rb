@@ -1,10 +1,15 @@
 require 'nokogiri'
 require 'open-uri'
 require 'optparse'
+require 'mail'
 
 #Option parser
 title = ""
 start = ""
+author = ""
+kindle = ""
+email = ""
+password = ""
 OptionParser.new do |o|
 	o.banner = "testing"
 	o.on("-t", "--title of SERIAL", "Provide title") do |serial|
@@ -12,6 +17,18 @@ OptionParser.new do |o|
 	end
 	o.on("-s", "--start LINK" , "Provide 1st chapter link") do |link|
 		start << link
+	end
+	o.on("-a", "--author NAME", "Provide name of author") do |a|
+		author << a
+	end
+	o.on("-k", "--kindle EMAIL", "Amazon kindle email address") do |k|
+		kindle << k
+	end
+	o.on("-f", "--source EMAIL", "Email the book is to be sent from") do |f|
+		email << f
+	end
+	o.on("-p", "--source-pass PASSWORD", "Password for the email address to send from") do |p|
+		password << p
 	end
 end.parse!
 
@@ -49,6 +66,7 @@ class Chapter
 	end
 end 
 
+#Custom chapter reading classes
 class RRChapter < Chapter
 	def text
 		foreword = @doc.css("div.author-note")
@@ -80,36 +98,8 @@ class PGTEChapter < Chapter
 	end
 end
 
-class Book
-	def initialize(chap, title="Beginning")
-		@next_url = chap.nextch
-		@title = title
-		@chap = chap
-		@body = ""
-		@toc = "<h1>Table of Contents</h1>"
-		@ind = 1
-		until @next_url == false
-			@next_url = @chap.nextch
-			@body << "<h1 id=\"chapter#{@ind.to_s}\">#{@chap.title}</h1>\n"
-			@body << @chap.text + "\n"
-			@toc  << "<a href=\"#chapter#{@ind}\">#{@chap.title}</a><br>\n"
-			@ind  += 1
-			if @next_url
-				@chap = @chap.class.new @next_url
-			end
-		end
-	end
-	def full_text
-		title = "<h1>#{@title}</h1>\n"
-		return title + @toc + @body
-	end
-	def shelve(fname);
-		File.open fname, 'w' do |f| ; f.puts self.full_text;
-		end
-	end 
-end
-
-def classFinder(url) #if you add custom classes, add the pattern to search for to verify them here.
+#if you add custom classes, add the pattern to search for to verify them here.
+def classFinder(url)
 	patterns = {
 		"royalroad" => RRChapter,
 		"wordpress" => WPChapter,
@@ -130,9 +120,72 @@ def classFinder(url) #if you add custom classes, add the pattern to search for t
 	return @chapclass
 end
 
-url = start
+class Book
+	def initialize(chap, title="Beginning", author="Unknown")
+		@next_url = chap.nextch
+		@title = title
+		@author = author
+		@fname = fname
+		@chap = chap
+		@body = ""
+		@toc = "<h1>Table of Contents</h1>"
+		@ind = 1
+		until @next_url == false
+			@next_url = @chap.nextch
+			@body << "<h1 id=\"chapter#{@ind.to_s}\">#{@chap.title}</h1>\n"
+			@body << @chap.text + "\n"
+			@toc  << "<a href=\"#chapter#{@ind}\">#{@chap.title}</a><br>\n"
+			@ind  += 1
+			if @next_url
+				@chap = @chap.class.new @next_url
+			end
+		end
+	end
+	def full_text
+		title = "<h1>#{@title}</h1>\n<i>#{Time.now.inspect}</i><br>\n"
+		return title + @toc + @body
+	end
+	def write(fname="#{title}.html")
+		File.open fname, 'w' do |f| ; f.puts self.full_text;
+		end
+		@fname = fname
+	end
+	def convert
+		@mobi = if @fname.include? "."
+			@fname.gsub @fname.split(".").last, "mobi"
+		else
+			@fname + ".mobi"
+		end
+		system "ebook-convert #{@fname} #{@mobi} --title #{@title} --authors #{@author} --max-toc-link 600 --level1-toc \".//h1\""
+	end
+	def html; @fname; end
+	def mobi; @mobi; end
+	end
+end
 
+def publish(book, email, password, kindle)
+	gmx_options = { :address              => "mail.gmx.com",
+                :port                 => 587,
+                :user_name            => email,
+                :password             => password,
+                :authentication       => 'plain',
+                :enable_starttls_auto => true  }
+	Mail.defaults do
+		delivery_method :smtp, gmx_options
+	end
+
+	Mail.deliver do
+	  to kindle
+	  from email
+	  subject ' '
+	  add_file book.mobi
+	end
+end
+
+url = start
 ch1 = classFinder(url)
 ch1 = ch1.new url
-book = Book.new ch1, title
-book = book.shelve "#{title}.html"
+book = Book.new ch1, title, author
+book.write
+book.convert
+publish book, email, password, kindle
