@@ -142,7 +142,7 @@ class Book
 		end
 	end
 	def full_text
-		title = "<h1>#{@title}</h1>\n<i>#{Time.now.inspect}</i><br>\n"
+		title = "<h1>#{@title}</h1 class=\"chap-title\">\n<i>#{Time.now.inspect}</i><br>\n"
 		return title + @toc + @body
 	end
 	def write(fname="#{title}.html")
