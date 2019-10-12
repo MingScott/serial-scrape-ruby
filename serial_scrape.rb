@@ -65,6 +65,22 @@ class WPChapter < Chapter
 	end
 end
 
+class WardChapter < Chapter
+	def text
+		t = @doc.css("div.entry-content").first.css("p")
+		return t[1..t.length-2].to_s
+	end
+end
+
+class PGTEChapter
+	def title
+		return @doc.css("h1.entry-title").first
+	end
+	def text
+		return @doc.css("div.entry-content p").to_s
+	end
+end
+
 class Book
 	def initialize(chap, title="Beginning")
 		@next_url = chap.nextch
@@ -94,18 +110,22 @@ class Book
 	end 
 end
 
-def classFinder(url) #if you add custom classes, add the pattern to search for to verify them here
+def classFinder(url) #if you add custom classes, add the pattern to search for to verify them here.
 	patterns = {
 		"royalroad" => RRChapter,
-		"parahumans" => WPChapter,
-		"wordpress" => WPChapter
+		"wordpress" => WPChapter,
+		"parahumans" => WardChapter,
+		"practical" => PGTEChapter
 	}
 	@chapclass = ""
 	patterns.keys.each do |k|
 		@chapclass = if url.include? k
 			patterns[k]
+		else
+			@chapclass
 		end
 	end
+	puts @chapclass
 	if @chapclass == ""
 		@chapclass = Chapter
 	end
@@ -115,7 +135,7 @@ end
 url = start
 
 ch1 = classFinder(url)
-puts ch1
+puts ch1.class
 ch1 = ch1.new url
 delve = Book.new ch1, title
 delve = delve.shelve "#{title}.html"
