@@ -4,16 +4,17 @@ require 'optparse'
 require 'mail'
 
 #Option parser
-title = ""
+@book_title = ""
 start = ""
 author = ""
 kindle = ""
 email = ""
 password = ""
+path = ""
 OptionParser.new do |o|
 	o.banner = "testing"
-	o.on("-t", "--title of SERIAL", "Provide title") do |serial|
-		title << serial
+	o.on("-n", "--name NAME", "Provide book name") do |serial|
+		@book_title << serial
 	end
 	o.on("-s", "--start LINK" , "Provide 1st chapter link") do |link|
 		start << link
@@ -21,14 +22,18 @@ OptionParser.new do |o|
 	o.on("-a", "--author NAME", "Provide name of author") do |a|
 		author << a
 	end
-	o.on("-k", "--kindle EMAIL", "Amazon kindle email address") do |k|
+	o.on("-t", "--to EMAIL", "email address to send to") do |k|
 		kindle << k
 	end
-	o.on("-f", "--source EMAIL", "Email the book is to be sent from") do |f|
+	o.on("-f", "--from EMAIL", "email address to send from") do |f|
 		email << f
 	end
-	o.on("-p", "--source-pass PASSWORD", "Password for the email address to send from") do |p|
+	o.on("-p", "--password PASSWORD", "Password for the email address to send from") do |p|
 		password << p
+	end
+	o.on("-d","--directory PATH", "Directory to write files to") do |d|
+		path << d
+		path = path + '/' unless path[-1] == '/'
 	end
 end.parse!
 
@@ -147,13 +152,13 @@ class Book
 		return title + @toc + @body
 	end
 
-	def write(fname="#{@title}.html")
+	def write_to_file(fname="#{@title}.html")
 		File.open fname, 'w' do |f| ; f.puts self.full_text;
 		end
 		@fname = fname
 	end
 
-	def convert
+	def convert_to_mobi
 		@mobi = if @fname.include? "."
 			@fname.gsub @fname.split(".").last, "mobi"
 		else
@@ -191,7 +196,7 @@ end
 url = start
 ch1 = classFinder(url)
 ch1 = ch1.new url
-book = Book.new ch1, title, author
-book.write
-book.convert
-publish book, email, password, kindle unless kindle.empty? 
+book = Book.new ch1, @book_title, author
+book.write_to_file path + @book_title + ".html"
+book.convert_to_mobi
+publish book, email, password, kindle unless kindle.empty?
