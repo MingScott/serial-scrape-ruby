@@ -132,7 +132,7 @@ class Book
 		@ind = 1
 		until @next_url == false
 			@next_url = @chap.nextch
-			@body << "<h1 id=\"chapter#{@ind.to_s}\">#{@chap.title}</h1>\n"
+			@body << "<h1 id=\"chapter#{@ind.to_s}\" class=\"chapter\">#{@chap.title}</h1>\n"
 			@body << @chap.text + "\n"
 			@toc  << "<a href=\"#chapter#{@ind}\">#{@chap.title}</a><br>\n"
 			@ind  += 1
@@ -156,7 +156,7 @@ class Book
 		else
 			@fname + ".mobi"
 		end
-		system "ebook-convert #{@fname} #{@mobi} --title #{@title} --authors #{@author} --max-toc-link 600 --level1-toc \".//h1\""
+		system "ebook-convert #{@fname} #{@mobi} --title #{@title} --authors #{@author} --max-toc-link 600"
 	end
 	def html; @fname; end
 	def mobi; @mobi; end
