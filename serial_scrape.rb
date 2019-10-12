@@ -3,11 +3,18 @@ require 'open-uri'
 require 'optparse'
 
 #Option parser
-@options = Hash.new
+title = ""
+start = ""
 OptionParser.new do |o|
-	o.on("-t", "--title", "Provide title"){ |t| @options["title"] = t }
-	o.on("-l", "--link" , "Provide 1st chapter link"){ |l| @options["start"] = l }
+	o.banner = "testing"
+	o.on("-t", "--title of SERIAL", "Provide title") do |serial|
+		title << serial
+	end
+	o.on("-s", "--start LINK" , "Provide 1st chapter link") do |link|
+		start << link
+	end
 end.parse!
+puts @opts
 
 #Generic chapter reading class
 class Chapter
@@ -97,8 +104,8 @@ def classFinder(url) #if you add custom classes, add the pattern to search for t
 	return @chapclass
 end
 
-url = "https://www.royalroad.com/fiction/25225/delve/chapter/368012/1-woodland"
+url = start
 
 ch1 = classFinder(url).new url
-delve = Book.new ch1, "Delve"
-delve = delve.shelve "delve.html"
+delve = Book.new ch1, title
+delve = delve.shelve "#{title}.html"
