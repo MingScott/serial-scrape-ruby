@@ -135,7 +135,7 @@ end
 url = start
 
 ch1 = classFinder(url)
-puts ch1.class
+puts ch1.class 
 ch1 = ch1.new url
-delve = Book.new ch1, title
-delve = delve.shelve "#{title}.html"
+book = Book.new ch1, title
+book = book.shelve "#{title}.html"
