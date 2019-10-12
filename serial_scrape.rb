@@ -67,29 +67,30 @@ class Chapter
 end 
 
 #Custom chapter reading classes
-class RRChapter < Chapter
+###############
+class RRChapter < Chapter #Royalroad
 	def text
-		foreword = @doc.css("div.author-note")
+		foreword = @doc.css "div.author-note"
 		doc = @doc.css("div.chapter-inner.chapter-content").first
 		doc = doc.css "p"
 		return "<div align=\"right\"><i>#{foreword.to_s}</i></div>\n#{doc.to_s}\n"
-	end #Chapter class customized for royalroad
+	end 
 end
 
-class WPChapter < Chapter
+class WPChapter < Chapter #Wordpress
 	def text
 		return @doc.css("div.entry-content").first.to_s
 	end
 end
 
-class WardChapter < Chapter
+class WardChapter < Chapter #Ward/other wildbow works
 	def text
 		t = @doc.css("div.entry-content").first.css("p")
 		return t[1..t.length-2].to_s
 	end
 end
 
-class PGTEChapter < Chapter
+class PGTEChapter < Chapter #Practical Guide to Evil
 	def title
 		return @doc.css("h1.entry-title").first.content
 	end
@@ -98,13 +99,13 @@ class PGTEChapter < Chapter
 	end
 end
 
-#if you add custom classes, add the pattern to search for to verify them here.
+#if you add custom classes, add the pattern to search for to verify them here. The last class in the list that matches a given url is the one that's used, so make sure to add custom classes for a given serial at the end.
 def classFinder(url)
 	patterns = {
 		"royalroad" => RRChapter,
 		"wordpress" => WPChapter,
 		"parahumans" => WardChapter,
-		"practical" => PGTEChapter
+		"practicalguidetoevil" => PGTEChapter
 	}
 	@chapclass = ""
 	patterns.keys.each do |k|
@@ -141,15 +142,18 @@ class Book
 			end
 		end
 	end
+
 	def full_text
 		title = "<h1>#{@title}</h1 class=\"chap-title\">\n<i>#{Time.now.inspect}</i><br>\n"
 		return title + @toc + @body
 	end
+
 	def write(fname="#{title}.html")
 		File.open fname, 'w' do |f| ; f.puts self.full_text;
 		end
 		@fname = fname
 	end
+
 	def convert
 		@mobi = if @fname.include? "."
 			@fname.gsub @fname.split(".").last, "mobi"
@@ -158,8 +162,11 @@ class Book
 		end
 		system "ebook-convert #{@fname} #{@mobi} --title #{@title} --authors #{@author} --max-toc-link 600"
 	end
-	def html; @fname; end
-	def mobi; @mobi; end
+
+	def html; @fname;
+	end
+
+	def mobi; @mobi;
 	end
 end
 
