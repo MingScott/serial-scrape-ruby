@@ -14,7 +14,6 @@ OptionParser.new do |o|
 		start << link
 	end
 end.parse!
-puts @opts
 
 #Generic chapter reading class
 class Chapter
@@ -72,9 +71,9 @@ class WardChapter < Chapter
 	end
 end
 
-class PGTEChapter
+class PGTEChapter < Chapter
 	def title
-		return @doc.css("h1.entry-title").first
+		return @doc.css("h1.entry-title").first.content
 	end
 	def text
 		return @doc.css("div.entry-content p").to_s
@@ -125,7 +124,6 @@ def classFinder(url) #if you add custom classes, add the pattern to search for t
 			@chapclass
 		end
 	end
-	puts @chapclass
 	if @chapclass == ""
 		@chapclass = Chapter
 	end
@@ -135,7 +133,6 @@ end
 url = start
 
 ch1 = classFinder(url)
-puts ch1.class 
 ch1 = ch1.new url
 book = Book.new ch1, title
 book = book.shelve "#{title}.html"
