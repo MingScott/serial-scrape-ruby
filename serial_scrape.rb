@@ -126,7 +126,6 @@ class Book
 		@next_url = chap.nextch
 		@title = title
 		@author = author
-		@fname = fname
 		@chap = chap
 		@body = ""
 		@toc = "<h1>Table of Contents</h1>"
@@ -148,7 +147,7 @@ class Book
 		return title + @toc + @body
 	end
 
-	def write(fname="#{title}.html")
+	def write(fname="#{@title}.html")
 		File.open fname, 'w' do |f| ; f.puts self.full_text;
 		end
 		@fname = fname
@@ -160,7 +159,7 @@ class Book
 		else
 			@fname + ".mobi"
 		end
-		system "ebook-convert #{@fname} #{@mobi} --title #{@title} --authors #{@author} --max-toc-link 600"
+		system "ebook-convert #{@fname} #{@mobi} --title #{@title} --authors \"#{@author}\" --max-toc-link 600"
 	end
 
 	def html; @fname;
@@ -195,4 +194,4 @@ ch1 = ch1.new url
 book = Book.new ch1, title, author
 book.write
 book.convert
-publish book, email, password, kindle
+publish book, email, password, kindle unless kindle.empty? 
