@@ -33,7 +33,7 @@ OptionParser.new do |o|
 	end
 	o.on("-d","--directory PATH", "Directory to write files to") do |d|
 		path << d
-		path = path + '/' unless path[-1] == '/'
+		path = path + '/' unless path[-1] == '/' || path.empty?
 	end
 end.parse!
 
@@ -84,7 +84,22 @@ end
 
 class WPChapter < Chapter #Wordpress
 	def text
-		return @doc.css("div.entry-content").first.to_s
+		text = @doc.css("div.entry-content").first
+		links = text.css("a")
+		divs = text.css("div")
+
+		to_remove = []
+		links.each do |l|
+			to_remove << l.to_s if l.content.upcase.include? "NEXT" or l.content.upcase.include? "PREV"
+		end
+		divs.each do |d|
+			to_remove << d.to_s if d["class"].include? "shar" or d["class"].include? "wpa" if d.keys.join(" ").include? "class"
+		end
+		stext = text.to_s
+		to_remove.each do |r|
+			stext = stext.gsub r, ""
+		end
+		return stext
 	end
 end
 
