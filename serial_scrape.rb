@@ -12,7 +12,7 @@ email = ""
 password = ""
 path = ""
 OptionParser.new do |o|
-	o.banner = "testing"
+	o.banner = ""
 	o.on("-n", "--name NAME", "Provide book name") do |serial|
 		@book_title << serial
 	end
@@ -101,6 +101,9 @@ class WPChapter < Chapter #Wordpress
 		end
 		return stext
 	end
+	def title
+		@doc.css("h1.entry-title").first.content
+	end
 end
 
 class WardChapter < Chapter #Ward/other wildbow works
@@ -119,13 +122,27 @@ class PGTEChapter < Chapter #Practical Guide to Evil
 	end
 end
 
+class WanderingInn < WPChapter #The Wandering Inn
+	def initialize(url)
+		url = url.gsub ".wordpress", ""
+		@doc = 		Nokogiri::HTML open url
+		@url = 		url
+	end
+	def nextch
+		nc = self.linksearch "NEXT"
+		nc.gsub ".wordpress", "" if nc
+		nc
+	end
+end
+
 #if you add custom classes, add the pattern to search for to verify them here. The last class in the list that matches a given url is the one that's used, so make sure to add custom classes for a given serial at the end.
 def classFinder(url)
 	patterns = {
-		"royalroad" => RRChapter,
-		"wordpress" => WPChapter,
-		"parahumans" => WardChapter,
-		"practicalguidetoevil" => PGTEChapter
+		"royalroad" => 				RRChapter,
+		"wordpress" => 				WPChapter,
+		"parahumans" => 			WardChapter,
+		"practicalguidetoevil" => 	PGTEChapter,
+		"wanderinginn" =>			WanderingInn
 	}
 	@chapclass = ""
 	patterns.keys.each do |k|
@@ -151,6 +168,7 @@ class Book
 		@toc = "<h1>Table of Contents</h1>"
 		@ind = 1
 		until @next_url == false
+			$stdout.puts @chap.title
 			@next_url = @chap.nextch
 			@body << "<h1 id=\"chapter#{@ind.to_s}\" class=\"chapter\">#{@chap.title}</h1>\n"
 			@body << @chap.text + "\n"
